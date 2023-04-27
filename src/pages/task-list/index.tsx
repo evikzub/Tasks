@@ -29,16 +29,14 @@ function PageContent() {
     const dispatch = useAppDispatch();
     console.log('PageContent');
   
-    //const { isFetching } = 
-    taskModel.getTaskListAsync(dispatch);
+    const { isFetching } = taskModel.getTaskListAsync(dispatch);
     
     const isEmpty = taskModel.isTasksEmpty();
     const filteredTasks = taskModel.getfilteredTasks();
     //const filteredTasks = useAppSelector(state => state.tasks.data);
     //console.log('filteredTasks ->', filteredTasks);
-  
-    //if (isFetching) return <Spin size="large" />;
-  
+    
+    if (isFetching) return <Spin size="large" />;
     if (isEmpty) return <Empty description="No tasks found" />;
   
     return filteredTasks.map((task) => (
@@ -46,7 +44,7 @@ function PageContent() {
         <TaskRow
           data={task}
           titleHref={`/${task.id}`}
-          before={<ToggleTask taskId={task.id} withStatus={false} />}
+          before={<ToggleTask task={task} withStatus={false} />}
         />
       </Col>
     ));

@@ -2,11 +2,14 @@ import {
     //createAsyncThunk,
     createSelector,
     createSlice,
+    current,
     Dispatch,
     PayloadAction,
 } from '@reduxjs/toolkit';
-import { useQuery } from '@tanstack/react-query';
+import {produce} from 'immer';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
+import { useAppSelector } from '../../app/hooks';
 import { RootState } from '../../app/store';
 import { Task, typicodeApi } from '../../shared/api';
 
@@ -35,12 +38,16 @@ export const taskModel = createSlice({
         addTaskToList: (state, { payload: task }: PayloadAction<Task>) => {
             //state.data = { ...state.data, ...normalizeTask(task).entities.tasks };
             console.log('addTaskToList -> ', task);
-            console.log('StateData -> ', state.data);
-            //state.data = [...state.data, task];
-            state.data.push(task);
+            console.log('StateData -> ', current(state.data));
+            if(state.data.find((values) => values.id !== task.id))
+                state.data.push(task);
         },
-        toggleTask: ({ data }, { payload: taskId }: PayloadAction<number>) => {
-            data[taskId].completed = !data[taskId].completed;
+
+        //state.date & action.payload
+        toggleTask: ( {data: tasks}, { payload: taskId }: PayloadAction<number>) => {
+            const task = tasks.find(value => value.id === taskId)
+            if(task)
+                task.completed = !task.completed;
         },
     },
     // extraReducers: (builder) => {
@@ -55,7 +62,7 @@ export const taskModel = createSlice({
     // },
 });
 
-export const { toggleTask } = taskModel.actions;
+//export const { toggleTask } = taskModel.actions;
 //export const { actions } = taskModel;
 
 // react-query actions (everything that async)
@@ -80,18 +87,6 @@ export const getTaskListAsync = (dispatch: Dispatch) => {
     return response;
 }
 
-// export const getTaskListAsync = createAsyncThunk<
-//     Task[],
-//     void,
-//     { rejectValue: string }
-//     >('tasks/fetchTasks', async function (_, { rejectWithValue }) {
-//     console.log('getTaskListAsync');
-//     const response = await typicodeApi.getTaskList();
-//     //if (response.status.)
-
-//     return await response.data;
-// });
-
 export const getTaskByIdAsync = (taskId: number, dispatch: Dispatch) => {
     console.log('getTaskByIdAsync -> ', taskId);
     const response = useQuery({
@@ -114,36 +109,63 @@ export const getTaskByIdAsync = (taskId: number, dispatch: Dispatch) => {
     return response;
 };
 
-// selectors
+export const updateTask = () => useMutation({
+    mutationKey: [TASK_SINGLE_QUERY_KEY, 'toggle'],
+    mutationFn: (task: Task) => typicodeApi.updateTask(task),
+    onSuccess(data, variables) {
+        console.log('Task updated', data, variables);
+    },
+    onError(error) {
+        console.log('Task update error ->', error);            
+    },
+}) 
 
+export const toggleTask = (task: Task, dispatch: Dispatch) => {
+    console.log('toggleTask -> ', task);
+    dispatch(taskModel.actions.toggleTask(task.id));
+
+    const value = produce(task, draft => {
+        draft.completed = !draft.completed;
+    });
+    return value;
+
+    //updateTask().mutate(value);
+    //console.log('toggleTask -> value', value);
+}
+
+// selectors
+// Memoizing Selectors with createSelector
+// https://redux.js.org/tutorials/fundamentals/part-7-standard-patterns
 export const getfilteredTasks = () => {
-    console.log('getfilteredTasks');
-    return useSelector(
+    const values = useSelector(
         createSelector(
             (state: RootState) => state.tasks.queryConfig,
             (state: RootState) => state.tasks.data,
             (
-                queryConfig: RootState['tasks']['queryConfig'],
-                tasks: RootState['tasks']['data']
+                //queryConfig: RootState['tasks']['queryConfig'],
+                //tasks: RootState['tasks']['data']
+                config,
+                tasks
             ) =>
-                Object.values(tasks).filter(
-                    (task) =>
-                        queryConfig?.completed === undefined ||
-                        task?.completed === queryConfig.completed
+                //Object.values(tasks).filter(
+                tasks.filter(
+                        (task) =>
+                        config?.completed === undefined ||
+                        task?.completed === config.completed
                 )
         )
     );
+    console.log('getfilteredTasks -> ', values);    
+    return values;
 };
 
 export const useTask = (taskId: number) => {
     const result = useSelector(
         createSelector(
             (state: RootState) => state.tasks.data,
-            //(tasks) => tasks[taskId]
             (tasks) => tasks.find((task) => task.id === taskId)
-            //Object.values(tasks).find((task) => task.id === taskId)
+                //tasks.filter((task) => task.id === taskId)
         )
-        //(state: RootState) => state.tasks.data.find((task) => task.id === taskId)
     );
     console.log('useTask -> ', taskId, ' found -> ', result);
     return result;

@@ -12,14 +12,15 @@ const TaskDetails = () => {
     const dispatch = useAppDispatch();
     const { taskId } = useParams();
     console.log('TaskDetails -> taskId ->',taskId);
-    //const task = taskModel.useTask(+taskId!);
+    //let task = taskModel.useTask(+taskId!);
     //Why if causes an error on page reload?
     //act-dom.development.js:16381 Uncaught Error: Rendered fewer hooks than expected.
     //if (!task) {
         //console.log('!task, ', task);
-        const {isFetching, isError, data: task} = taskModel.getTaskByIdAsync(+taskId!, dispatch);
-        console.log('TaskDetails -> isFetching -> ', isFetching, ' data -> ', task?.data);
-        //if (isFetching) return <Spin size="large" />;
+        const {isFetching, isError, data: value} = taskModel.getTaskByIdAsync(+taskId!, dispatch);
+        console.log('TaskDetails -> isFetching -> ', isFetching, ' data -> ', value);
+        if (isFetching) return <Spin size="large" />;
+        const task = value?.data;
     //}
     
     if (!task && isError)
@@ -40,13 +41,14 @@ const TaskDetails = () => {
         <Layout className={styles.root}>
             <Layout.Content className={styles.content}>
                 <TaskCard
-                    data={task?.data}
+                    data={task}
                     size='default'
                     loading={isFetching}
                     className={styles.card}
                     bodyStyle={{ height: 400 }}
                     extra={<Link to='/'>Back to tasks list</Link> }
-                    actions={[<ToggleTask key='toggle' taskId={+taskId!} /> ]}
+                    //actions={[<ToggleTask key='toggle' task={+taskId!} /> ]}
+                    actions={[<ToggleTask key='toggle' task={task} /> ]}
                 />
             </Layout.Content>
         </Layout>
