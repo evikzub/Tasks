@@ -6,8 +6,8 @@ import {
 	Dispatch,
 	PayloadAction,
 } from '@reduxjs/toolkit';
-import { produce } from 'immer';
-import { useMutation, useQuery } from '@tanstack/react-query';
+//import { produce } from 'immer';
+import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { useAppSelector } from '../../app/hooks';
 import { RootState } from '../../app/store';
@@ -19,12 +19,12 @@ type QueryConfig = {
 };
 
 type TasksState = {
-	data: Task[];
+	data: Record<number, Task>;
 	queryConfig?: QueryConfig;
 };
 
 const initialState: TasksState = {
-	data: [],
+	data: {}, //[],
 	queryConfig: {},
 };
 
@@ -33,33 +33,45 @@ export const taskModel = createSlice({
 	initialState,
 	reducers: {
 		setTaskList: (state, action: PayloadAction<Task[]>) => {
-			state.data = action.payload;
+			console.log('Reducer -> setTaskList -> assign new data');
+			// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce
+			state.data =
+				action.payload.reduce((record, task: Task) => {
+					record[task.id] = task;
+					return record;
+				}, {} as Record<number, Task>)
 		},
 		addTaskToList: (state, { payload: task }: PayloadAction<Task>) => {
-			//state.data = { ...state.data, ...normalizeTask(task).entities.tasks };
-			console.log('addTaskToList -> ', task);
-			console.log('StateData -> ', current(state.data));
-			if (state.data.find((values) => values.id !== task.id))
-				state.data.push(task);
+			//console.log('Reducer -> addTaskToList -> ', task);
+			//const tasks = state.data.filter((values) => values.id !== task.id);
+			//tasks.push(task);
+			state.data[task.id] = task;
+			console.log('Reducer -> addTaskToList -> ', current(state.data));
 		},
 
 		//state.date & action.payload
-		toggleTask: ({ data: tasks }, { payload: taskId }: PayloadAction<number>) => {
-			const task = tasks.find(value => value.id === taskId)
-			if (task)
-				task.completed = !task.completed;
+		_toggleTask: ({ data: tasks }, { payload: taskId }: PayloadAction<number>) => {
+			//console.log('Reducer -> toggleTask -> task before -> ', current(tasks));
+			// const task = tasks.find(value => value.id === taskId)
+			// if (task) {
+			// 	console.log('Reducer -> toggleTask -> task before', current(task))
+			// 	task.completed = !task.completed;
+			// }
+			tasks[taskId].completed = !tasks[taskId].completed;
+			console.log('Reducer -> toggleTask -> task after', current(tasks));
 		},
+		updateTask: ({ data: tasks }, { payload: task }: PayloadAction<Task>) => {
+			//console.log('Reducer -> updateTask -> task before -> ', current(tasks));
+			// const task = tasks.find(value => value.id === taskId)
+			// if (task) {
+			// 	console.log('Reducer -> toggleTask -> task before', current(task))
+			// 	task.completed = !task.completed;
+			// }
+			tasks[task.id] = task;
+			console.log('Reducer -> updateTask -> task after', current(tasks));
+		},
+
 	},
-	// extraReducers: (builder) => {
-	//     builder
-	//         .addCase(getTaskListAsync.pending, (state, action) => {
-	//             console.log('getTaskListAsync loading...');
-	//         })
-	//         .addCase(getTaskListAsync.fulfilled, (state, action) => {
-	//             console.log('getTaskListAsync loading...');
-	//             state.data = action.payload;
-	//         });
-	// },
 });
 
 //export const { toggleTask } = taskModel.actions;
@@ -77,7 +89,7 @@ export const getTaskListAsync = (dispatch: Dispatch) => {
 		queryFn: () => typicodeApi.getTaskList(),
 		refetchOnWindowFocus: false,
 		onSuccess: ({ data }) => {
-			console.log('Set Task list -> ', data);
+			console.log('getTaskListAsync -> Set Task list -> ', data);
 			dispatch(taskModel.actions.setTaskList(data))
 		},
 		onError(err: Error) {
@@ -109,29 +121,31 @@ export const getTaskByIdAsync = (taskId: number, dispatch: Dispatch) => {
 	return response;
 };
 
-export const updateTask = () => useMutation({
-	mutationKey: [TASK_SINGLE_QUERY_KEY, 'toggle'],
+export const updateTask = (client: QueryClient, dispatch: Dispatch) => useMutation({
+	mutationKey: [TASK_SINGLE_QUERY_KEY, 'update'],
 	mutationFn: (task: Task) => typicodeApi.updateTask(task),
 	onSuccess(data, variables) {
 		console.log('Task updated', data, variables);
+		//?invalidate does not work?
+		//client.invalidateQueries({ queryKey: [TASK_LIST_QUERY_KEY] });
+		//client.invalidateQueries({ queryKey: [TASK_SINGLE_QUERY_KEY, data.data.id] });
+		client.setQueryData([TASK_SINGLE_QUERY_KEY, variables.id], data);
+		dispatch(taskModel.actions.updateTask(variables));
 	},
 	onError(error) {
 		console.log('Task update error ->', error);
 	},
 })
 
-export const toggleTask = (task: Task, dispatch: Dispatch) => {
-	console.log('toggleTask -> ', task);
-	dispatch(taskModel.actions.toggleTask(task.id));
+// export const _toggleTask = (task: Task, dispatch: Dispatch) => {
+// 	console.log('taskModel -> toggleTask -> ', task);
+// 	dispatch(taskModel.actions._toggleTask(task.id));
 
-	const value = produce(task, draft => {
-		draft.completed = !draft.completed;
-	});
-	return value;
-
-	//updateTask().mutate(value);
-	//console.log('toggleTask -> value', value);
-}
+// 	const value = produce(task, draft => {
+// 		draft.completed = !draft.completed;
+// 	});
+// 	return value;
+// }
 
 // selectors
 // Memoizing Selectors with createSelector
@@ -147,8 +161,8 @@ export const getfilteredTasks = () => {
 				config,
 				tasks
 			) =>
-				//Object.values(tasks).filter(
-				tasks.filter(
+				Object.values(tasks).filter(
+					//tasks.filter(
 					(task) =>
 						config?.completed === undefined ||
 						task?.completed === config.completed
@@ -163,7 +177,7 @@ export const useTask = (taskId: number) => {
 	const result = useSelector(
 		createSelector(
 			(state: RootState) => state.tasks.data,
-			(tasks) => tasks.find((task) => task.id === taskId)
+			(tasks) => tasks[taskId] //tasks.find((task) => task.id === taskId)
 			//tasks.filter((task) => task.id === taskId)
 		)
 	);

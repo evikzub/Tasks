@@ -44,7 +44,7 @@ function PageContent() {
 			<TaskRow
 				data={task}
 				titleHref={`/${task.id}`}
-				before={<ToggleTask task={task} withStatus={false} />}
+				before={<ToggleTask taskId={task.id} withStatus={false} />}
 			/>
 		</Col>
 	));

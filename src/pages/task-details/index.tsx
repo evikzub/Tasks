@@ -4,7 +4,6 @@ import { useAppDispatch, useAppSelector } from "../../app/hooks"
 import { TaskCard } from "../../entities";
 import { taskModel } from "../../entities";
 import { ToggleTask } from "../../features/toggle-task/toggleTask";
-import { Task } from "../../shared/api";
 
 import styles from './styles.module.scss';
 
@@ -48,7 +47,7 @@ const TaskDetails = () => {
 					bodyStyle={{ height: 400 }}
 					extra={<Link to='/'>Back to tasks list</Link>}
 					//actions={[<ToggleTask key='toggle' task={+taskId!} /> ]}
-					actions={[<ToggleTask key='toggle' task={task} />]}
+					actions={[<ToggleTask key='toggle' taskId={+taskId!} />]}
 				/>
 			</Layout.Content>
 		</Layout>
