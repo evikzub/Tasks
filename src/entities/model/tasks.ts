@@ -1,5 +1,4 @@
 import {
-	//createAsyncThunk,
 	createSelector,
 	createSlice,
 	current,
@@ -42,35 +41,18 @@ export const taskModel = createSlice({
 				}, {} as Record<number, Task>)
 		},
 		addTaskToList: (state, { payload: task }: PayloadAction<Task>) => {
-			//console.log('Reducer -> addTaskToList -> ', task);
-			//const tasks = state.data.filter((values) => values.id !== task.id);
-			//tasks.push(task);
 			state.data[task.id] = task;
-			console.log('Reducer -> addTaskToList -> ', current(state.data));
+			//console.log('Reducer -> addTaskToList -> ', current(state.data));
 		},
 
 		//state.date & action.payload
-		_toggleTask: ({ data: tasks }, { payload: taskId }: PayloadAction<number>) => {
-			//console.log('Reducer -> toggleTask -> task before -> ', current(tasks));
-			// const task = tasks.find(value => value.id === taskId)
-			// if (task) {
-			// 	console.log('Reducer -> toggleTask -> task before', current(task))
-			// 	task.completed = !task.completed;
-			// }
-			tasks[taskId].completed = !tasks[taskId].completed;
-			console.log('Reducer -> toggleTask -> task after', current(tasks));
-		},
 		updateTask: ({ data: tasks }, { payload: task }: PayloadAction<Task>) => {
-			//console.log('Reducer -> updateTask -> task before -> ', current(tasks));
-			// const task = tasks.find(value => value.id === taskId)
-			// if (task) {
-			// 	console.log('Reducer -> toggleTask -> task before', current(task))
-			// 	task.completed = !task.completed;
-			// }
 			tasks[task.id] = task;
-			console.log('Reducer -> updateTask -> task after', current(tasks));
+			//console.log('Reducer -> updateTask -> task after', current(tasks));
 		},
-
+		deleteTaskFromList: ({ data: tasks }, { payload: taskId }: PayloadAction<number>) => {
+			//console.log('Reducer -> deleteteTask -> ', taskId);
+		}
 	},
 });
 
@@ -137,15 +119,38 @@ export const updateTask = (client: QueryClient, dispatch: Dispatch) => useMutati
 	},
 })
 
-// export const _toggleTask = (task: Task, dispatch: Dispatch) => {
-// 	console.log('taskModel -> toggleTask -> ', task);
-// 	dispatch(taskModel.actions._toggleTask(task.id));
+export const addTask = (client: QueryClient, dispatch: Dispatch) => useMutation({
+	mutationKey: [TASK_SINGLE_QUERY_KEY, 'insert'],
+	mutationFn: (task: Task) => typicodeApi.addTask(task),
+	onSuccess(data, variables) {
+		console.log('Task added', data, variables);
+		//?invalidate does not work?
+		client.invalidateQueries({ queryKey: [TASK_LIST_QUERY_KEY] });
+		//client.invalidateQueries({ queryKey: [TASK_SINGLE_QUERY_KEY, data.data.id] });
+		//client.setQueryData([TASK_SINGLE_QUERY_KEY, variables.id], data);
+		dispatch(taskModel.actions.addTaskToList(variables));
+	},
+	onError(error) {
+		console.log('Task insert error ->', error);
+	},
+})
 
-// 	const value = produce(task, draft => {
-// 		draft.completed = !draft.completed;
-// 	});
-// 	return value;
-// }
+export const deleteTask = (client: QueryClient, dispatch: Dispatch) => useMutation({
+	mutationKey: [TASK_SINGLE_QUERY_KEY, 'delete'],
+	mutationFn: (taskId: number) => typicodeApi.deleteTask(taskId),
+	onSuccess(data, variables) {
+		console.log('Task deleted', data, variables);
+		//?invalidate does not work?
+		client.invalidateQueries({ queryKey: [TASK_LIST_QUERY_KEY] });
+		//client.invalidateQueries({ queryKey: [TASK_SINGLE_QUERY_KEY, data.data.id] });
+		//client.setQueryData([TASK_SINGLE_QUERY_KEY, variables.id], data);
+		dispatch(taskModel.actions.deleteTaskFromList(variables));
+	},
+	onError(error) {
+		console.log('Task insert error ->', error);
+	},
+})
+
 
 // selectors
 // Memoizing Selectors with createSelector
@@ -170,18 +175,18 @@ export const getfilteredTasks = () => {
 		)
 	);
 	console.log('getfilteredTasks -> ', values);
-	return values;
+	//sort desc
+	return values.sort((a, b) => { return b.id - a.id });
 };
 
 export const useTask = (taskId: number) => {
 	const result = useSelector(
 		createSelector(
 			(state: RootState) => state.tasks.data,
-			(tasks) => tasks[taskId] //tasks.find((task) => task.id === taskId)
-			//tasks.filter((task) => task.id === taskId)
+			(tasks) => tasks[taskId]
 		)
 	);
-	console.log('useTask -> ', taskId, ' found -> ', result);
+	//console.log('useTask -> ', taskId, ' found -> ', result);
 	return result;
 };
 

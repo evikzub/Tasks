@@ -10,9 +10,10 @@ export type TaskRowProps = PropsWithChildren<{
 	data: Task;//import("shared/api").Task;
 	titleHref?: string;
 	before?: ReactNode;
+	after?: ReactNode;
 }>;
 
-export const TaskRow = ({ data, before, titleHref }: TaskRowProps) => {
+export const TaskRow = ({ data, before, titleHref, after }: TaskRowProps) => {
 	const title =
 		titleHref ?
 			<Link to={titleHref}>{data.title}</Link>
@@ -23,8 +24,9 @@ export const TaskRow = ({ data, before, titleHref }: TaskRowProps) => {
 	return (
 		<Row className={cn(styles.root, { [styles.completed]: data.completed })}
 		>
-			{before}
-			{title}
+			<span className={styles.box1}>{before}</span>
+			<span className={styles.box2}>{title}</span>
+			<span className={styles.box3}>{after}</span>
 		</Row>
 	);
 };

@@ -1,5 +1,5 @@
 import { PropsWithChildren } from "react";
-import { Card } from "antd";
+import { Button, Card } from "antd";
 import { Task } from "../../../shared/api";
 
 import styles from './styles.module.scss';
@@ -7,7 +7,8 @@ import { Link } from "react-router-dom";
 
 export type TaskCardProps = PropsWithChildren<{
 	data?: Task //import("shared/api").Task;
-	titleHref?: string;
+	//titleHref?: string;
+	titleHref?(): void;
 }> &
 	import("antd").CardProps;
 
@@ -19,13 +20,26 @@ export const TaskCard = ({
 }: TaskCardProps) => {
 	if (!data && !cardProps.loading) return null;
 
+	const Text = ({ text }: { text: string | undefined }) => {
+		return (
+			< span style={data?.completed ? { textDecoration: 'line-through' } : {}}> {text}</span >
+		)
+	}
+
 	return (
 		<Card
 			title={`Task#${cardProps.loading ? "" : data?.id}`}
 			className={styles.root}
 			{...cardProps}
 		>
-			{titleHref ? <Link to={titleHref}>{data?.title}</Link> : data?.title}
+			{/* {titleHref ? <Link to={titleHref} state={{ visible: true }} reloadDocument={false} >{data?.title}</Link> : data?.title} */}
+			{titleHref ?
+				<Button type="link" onClick={titleHref}>
+					<Text text={data?.title} />
+				</Button>
+				: data?.title}
+			<br />
+			<p> <Text text={data?.note} /> </p>
 			{children}
 		</Card>
 	);

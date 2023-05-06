@@ -3,4 +3,5 @@ export type Task = {
 	title: string;
 	//userId: number;
 	completed: boolean;
+	note?: string;
 };
