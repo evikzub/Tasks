@@ -1,5 +1,8 @@
 import { Provider } from 'react-redux';
-import { store } from '../store';
+import { setupStore } from '../store';
+//import { store } from '../store';
+
+const store = setupStore();
 
 export const withStore = (component: () => React.ReactNode) => () => (
 	//console.log('withStore'),

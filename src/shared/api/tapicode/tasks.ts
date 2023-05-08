@@ -1,15 +1,26 @@
 import { AxiosPromise } from 'axios';
 import { apiInstance } from './base';
-import type { Task } from './model';
+import type { Task } from '../types';
 
 const BASE_URL = '/todos';
 
-export const getTaskList = (): AxiosPromise<Task[]> => {
-	return apiInstance.get(BASE_URL);
+export type GetTasksListParams = {
+	//userId?: number;
+	//_sort?: string;
+	//_order?: string;
+	completed?: boolean;
+};
+
+export const getTaskList = (params?: GetTasksListParams): AxiosPromise<Task[]> => {
+	// const params: GetTasksListParams = {
+	// 	_sort: 'id',
+	// 	_order: 'desc',
+	// }
+	return apiInstance.get<Task[]>(BASE_URL, { params });
 };
 
 export const getTaskById = (taskId: number): AxiosPromise<Task> => {
-	return apiInstance.get(`${BASE_URL}/${taskId}`);
+	return apiInstance.get<Task>(`${BASE_URL}/${taskId}`);
 };
 
 export const addTask = (task: Task): AxiosPromise<Task> => {

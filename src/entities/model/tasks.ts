@@ -7,7 +7,7 @@ import {
 } from '@reduxjs/toolkit';
 //import { produce } from 'immer';
 import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
-import { useSelector } from 'react-redux';
+//import { useSelector } from 'react-redux';
 import { useAppSelector } from '../../app/hooks';
 import { RootState } from '../../app/store';
 import { Task, typicodeApi } from '../../shared/api';
@@ -156,7 +156,7 @@ export const deleteTask = (client: QueryClient, dispatch: Dispatch) => useMutati
 // Memoizing Selectors with createSelector
 // https://redux.js.org/tutorials/fundamentals/part-7-standard-patterns
 export const getfilteredTasks = () => {
-	const values = useSelector(
+	const values = useAppSelector(
 		createSelector(
 			(state: RootState) => state.tasks.queryConfig,
 			(state: RootState) => state.tasks.data,
@@ -180,7 +180,7 @@ export const getfilteredTasks = () => {
 };
 
 export const useTask = (taskId: number) => {
-	const result = useSelector(
+	const result = useAppSelector(
 		createSelector(
 			(state: RootState) => state.tasks.data,
 			(tasks) => tasks[taskId]
@@ -191,7 +191,7 @@ export const useTask = (taskId: number) => {
 };
 
 export const isTasksEmpty = (): boolean =>
-	useSelector(
+	useAppSelector(
 		createSelector(
 			(state: RootState) => state.tasks.data,
 			(tasks) => Object.keys(tasks).length === 0
@@ -202,4 +202,5 @@ export const getTaskStatus = (data: Task): string => {
 	return data.completed ? 'CLOSED' : 'OPENED';
 };
 
-export const reducer = taskModel.reducer;
+//export const reducer = taskModel.reducer;
+export default taskModel.reducer;

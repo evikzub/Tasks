@@ -1,5 +1,16 @@
 {
-    "todos": [
-        { "id": 1, "title": "json-server todo task", "completed": false }
-    ]
+  "todos": [
+    {
+      "id": 1,
+      "title": "json-server todo task",
+      "completed": false
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "name": "User-1",
+      "email": "e@e.com"
+    }
+  ]
 }

@@ -1,13 +1,13 @@
 import { Button, Col, Empty, Form, Input, InputRef, Layout, Row, Space, Spin, Typography, message } from "antd";
-import { useAppDispatch, useAppSelector } from "../../app/hooks";
+import { useAppDispatch } from "../../app/hooks";
 import { taskModel, TaskRow } from "../../entities";
 import { ToggleTask } from "../../features/toggle-task/toggleTask";
 import { PlusSquareOutlined } from '@ant-design/icons';
 import { Task } from "../../shared/api";
 import { QueryClient, useQueryClient } from "@tanstack/react-query";
-import { MouseEventHandler, useRef } from "react";
+import { useRef } from "react";
 import { DeleteOutlined } from '@ant-design/icons'
-import { Dispatch, ThunkDispatch } from "@reduxjs/toolkit";
+import { Dispatch } from "@reduxjs/toolkit";
 
 
 const TaskList = () => {
